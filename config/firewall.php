@@ -287,6 +287,7 @@ return [
                 'only' => [], // i.e. 'first_name'
                 'except' => [
                     'body', // for custom email add link
+                    'path', // app store module page URL passed during install steps
                 ], // i.e. 'password'
             ],
 
