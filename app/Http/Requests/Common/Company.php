@@ -17,9 +17,15 @@ class Company extends FormRequest
         $logo = 'nullable';
 
         if ($this->files->get('logo')) {
+            $logoFile = $this->files->get('logo');
+            $isSvg = strtolower($logoFile->getClientOriginalExtension()) === 'svg';
+
             $logo = 'mimes:' . config('filesystems.mimes')
-                    . '|between:0,' . config('filesystems.max_size') * 1024
-                    . '|dimensions:max_width=' . config('filesystems.max_width') . ',max_height=' . config('filesystems.max_height');
+                    . '|between:0,' . config('filesystems.max_size') * 1024;
+
+            if (! $isSvg) {
+                $logo .= '|dimensions:max_width=' . config('filesystems.max_width') . ',max_height=' . config('filesystems.max_height');
+            }
         }
 
         return [

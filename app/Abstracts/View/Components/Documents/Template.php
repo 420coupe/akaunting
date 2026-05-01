@@ -257,6 +257,15 @@ abstract class Template extends Component
             $path = base_path('public/img/company.png');
         }
 
+        $extension = File::extension($path);
+
+        if (strtolower($extension) === 'svg') {
+            $svgContents = $media ? $media->contents() : file_get_contents($path);
+            $content = 'data:image/svg+xml;base64,' . base64_encode($svgContents);
+
+            return $content;
+        }
+
         try {
             $image = Image::cache(function($image) use ($media, $path) {
                 $width = setting('invoice.logo_size_width');

@@ -34,7 +34,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'mimes' => env('FILESYSTEM_MIMES', 'pdf,jpeg,jpg,png'),
+    'mimes' => env('FILESYSTEM_MIMES', 'pdf,jpeg,jpg,png,svg'),
 
 
     /*
