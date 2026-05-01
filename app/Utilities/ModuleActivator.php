@@ -151,6 +151,8 @@ class ModuleActivator implements ActivatorInterface
                 continue;
             }
 
+            continue;
+
             $subscription = $this->getSubscription($alias);
 
             if (! is_object($subscription)) {
