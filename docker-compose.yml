@@ -1,0 +1,230 @@
+services:
+  # ---------------------------------------------------------------------------
+  # PHP-FPM application
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: akaunting-app
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Akaunting}
+      APP_ENV: ${APP_ENV:-production}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL}
+      APP_INSTALLED: ${APP_INSTALLED:-false}
+      APP_LOCALE: ${APP_LOCALE:-en-GB}
+      LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
+      LOG_LEVEL: ${LOG_LEVEL:-error}
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+      DB_PREFIX: ${DB_PREFIX:-ak_}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_DRIVER: ${CACHE_DRIVER:-redis}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      MAIL_MAILER: ${MAIL_MAILER:-sendgrid}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Akaunting}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-s3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-auto}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_ENDPOINT: ${AWS_ENDPOINT}
+      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-true}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-*}
+      COMPANY_NAME: ${COMPANY_NAME:-My Company}
+      COMPANY_EMAIL: ${COMPANY_EMAIL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    networks:
+      - akaunting_internal
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "php-fpm -t 2>&1 | grep -q 'configuration file' && echo OK",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Nginx — static assets + FastCGI proxy
+  # Attached to both internal network and NPM's external network so NPM
+  # can route traffic to it by container name (nginx:80).
+  # ---------------------------------------------------------------------------
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: nginx-runtime
+    container_name: akaunting-nginx
+    restart: unless-stopped
+    networks:
+      - akaunting_internal
+      - nginxproxymanager_default
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # Redis — cache, sessions, queues
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: akaunting-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning --ignore-warnings Memory-overcommit
+    volumes:
+      - redis_data:/data
+    networks:
+      - akaunting_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Queue worker
+  # ---------------------------------------------------------------------------
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: akaunting-worker
+    restart: unless-stopped
+    command:
+      [
+        "php",
+        "artisan",
+        "queue:work",
+        "--queue=default",
+        "--tries=3",
+        "--sleep=3",
+        "--max-time=3600",
+      ]
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      APP_INSTALLED: ${APP_INSTALLED:-false}
+      APP_ENV: ${APP_ENV:-production}
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+      DB_PREFIX: ${DB_PREFIX:-ak_}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_DRIVER: ${CACHE_DRIVER:-redis}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      MAIL_MAILER: ${MAIL_MAILER:-sendgrid}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Akaunting}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-s3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-auto}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_ENDPOINT: ${AWS_ENDPOINT}
+      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-true}
+    networks:
+      - akaunting_internal
+    depends_on:
+      app:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Cron scheduler — runs schedule:run every 60 seconds
+  # ---------------------------------------------------------------------------
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: akaunting-cron
+    restart: unless-stopped
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "while true; do php /var/www/html/artisan schedule:run --no-interaction >> /proc/1/fd/1 2>&1; sleep 60; done",
+      ]
+    environment:
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      APP_INSTALLED: ${APP_INSTALLED:-false}
+      APP_ENV: ${APP_ENV:-production}
+      DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+      DB_PREFIX: ${DB_PREFIX:-ak_}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_DRIVER: ${CACHE_DRIVER:-redis}
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      MAIL_MAILER: ${MAIL_MAILER:-sendgrid}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Akaunting}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-s3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-auto}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_ENDPOINT: ${AWS_ENDPOINT}
+      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-true}
+    networks:
+      - akaunting_internal
+    depends_on:
+      app:
+        condition: service_healthy
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  redis_data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  akaunting_internal:
+    driver: bridge
+  nginxproxymanager_default:
+    external: true

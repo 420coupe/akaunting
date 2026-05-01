@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+# Leading slash anchors to project root — excludes /vendor/ (Composer) but NOT /public/vendor/
+/vendor/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Environment & secrets
+.env
+.env.*
+!.env.docker.example
+
+# Compiled assets (rebuilt in Docker)
+public/mix-manifest.json
+public/js/
+# public/css/ excluded but third_party/ contains source files needed at build time
+public/css/app.css
+
+# Laravel runtime / generated files
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*.php
+
+# Dev/test artefacts
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# IDE & OS
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# Docker files themselves (not needed in build context for layers)
+docker-compose*.yml
+docker-compose*.yaml
+
+# Node build tooling (rebuilt in node stage)
+
+# Docs
+README.md
+SECURITY.md
+*.txt
+!safelist.txt
+
+# CI
+.github/
