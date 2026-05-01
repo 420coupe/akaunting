@@ -138,6 +138,8 @@ class Item extends Controller
      */
     public function download(InstallRequest $request)
     {
+        set_time_limit(900);
+
         try {
             $path = $this->dispatch(new DownloadFile($request['alias'], $request['version']));
 
@@ -149,7 +151,7 @@ class Item extends Controller
                     'path' => $path,
                 ],
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $json = [
                 'success' => false,
                 'error' => true,
@@ -181,7 +183,7 @@ class Item extends Controller
                     'path' => $path,
                 ],
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $json = [
                 'success' => false,
                 'error' => true,
@@ -215,7 +217,7 @@ class Item extends Controller
                     'alias' => $request['alias'],
                 ],
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $json = [
                 'success' => false,
                 'error' => true,
@@ -271,7 +273,7 @@ class Item extends Controller
                     'alias' => $request['alias'],
                 ],
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $message = $e->getMessage();
 
             flash($message)->error()->important();
