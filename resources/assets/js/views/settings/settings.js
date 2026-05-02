@@ -28,13 +28,9 @@ const app = new Vue({
             form: new Form("setting"),
             bulk_action: new BulkAction("settings"),
             email: {
-                sendmailPath: true,
-                smtpHost: true,
-                smtpPort: true,
-                smtpUsername: true,
-                smtpPassword: true,
-                smtpEncryption: true,
-                sendgridApiKey: true,
+                showSendmailPath: false,
+                showSmtp: false,
+                showSendgridKey: false,
             },
             tags: null,
             template_title: "",
@@ -55,47 +51,9 @@ const app = new Vue({
 
     methods: {
         onChangeProtocol(protocol) {
-            switch (protocol) {
-                case "smtp":
-                    this.email.sendmailPath = true;
-                    this.email.smtpHost = false;
-                    this.email.smtpPort = false;
-                    this.email.smtpUsername = false;
-                    this.email.smtpPassword = false;
-                    this.email.smtpEncryption = false;
-                    this.email.sendgridApiKey = true;
-                    break;
-
-                case "sendmail":
-                    this.email.sendmailPath = false;
-                    this.email.smtpHost = true;
-                    this.email.smtpPort = true;
-                    this.email.smtpUsername = true;
-                    this.email.smtpPassword = true;
-                    this.email.smtpEncryption = true;
-                    this.email.sendgridApiKey = true;
-                    break;
-
-                case "sendgrid":
-                    this.email.sendmailPath = true;
-                    this.email.smtpHost = true;
-                    this.email.smtpPort = true;
-                    this.email.smtpUsername = true;
-                    this.email.smtpPassword = true;
-                    this.email.smtpEncryption = true;
-                    this.email.sendgridApiKey = false;
-                    break;
-
-                default:
-                    this.email.sendmailPath = true;
-                    this.email.smtpHost = true;
-                    this.email.smtpPort = true;
-                    this.email.smtpUsername = true;
-                    this.email.smtpPassword = true;
-                    this.email.smtpEncryption = true;
-                    this.email.sendgridApiKey = true;
-                    break;
-            }
+            this.email.showSendmailPath = protocol === "sendmail";
+            this.email.showSmtp = protocol === "smtp";
+            this.email.showSendgridKey = protocol === "sendgrid";
         },
 
         onTemplate() {
