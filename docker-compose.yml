@@ -71,8 +71,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: nginx-runtime
+      dockerfile: docker/nginx/Dockerfile
     container_name: akaunting-nginx
     restart: unless-stopped
     networks:

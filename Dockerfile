@@ -107,25 +107,3 @@ USER www-data
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
-
-# =============================================================================
-# Stage 4: Nginx — static asset serving + FastCGI proxy to PHP-FPM
-# =============================================================================
-FROM nginx:stable-alpine AS nginx-runtime
-
-# Copy compiled public assets from the runtime stage (not node-builder directly).
-# This guarantees nginx always serves the exact same JS/CSS as the app container
-# and eliminates the parallel build race where nginx could grab a stale cache.
-COPY --from=runtime /var/www/html/public /var/www/html/public
-
-# Belt-and-suspenders: copy public/vendor/ directly from the build context.
-# This ensures .dockerignore can never accidentally strip public/vendor/ — if it
-# did, the build would FAIL loudly here instead of silently 404ing at runtime.
-COPY public/vendor/ /var/www/html/public/vendor/
-
-# serviceworker.js and manifest.json live at project root but must be served from public/
-COPY serviceworker.js /var/www/html/public/serviceworker.js
-COPY manifest.json /var/www/html/public/manifest.json
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
