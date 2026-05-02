@@ -15,6 +15,7 @@ class Email extends SettingController
             'mail' => trans('settings.email.php'),
             'smtp' => trans('settings.email.smtp.name'),
             'sendmail' => trans('settings.email.sendmail'),
+            'sendgrid' => trans('settings.email.sendgrid'),
             'log' => trans('settings.email.log'),
         ];
 

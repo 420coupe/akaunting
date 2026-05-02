@@ -39,7 +39,7 @@ class Overrider
         date_default_timezone_set(config('app.timezone'));
 
         // Email
-        $email_protocol = setting('email.protocol', 'mail');
+        $email_protocol = setting('email.protocol', config('mail.default'));
         config(['mail.default' => $email_protocol]);
         config(['mail.from.name' => setting('company.name')]);
         config(['mail.from.address' => setting('company.email')]);
@@ -52,6 +52,9 @@ class Overrider
             config(['mail.mailers.smtp.username' => setting('email.smtp_username')]);
             config(['mail.mailers.smtp.password' => setting('email.smtp_password')]);
             config(['mail.mailers.smtp.encryption' => setting('email.smtp_encryption')]);
+        } elseif ($email_protocol == 'sendgrid') {
+            $api_key = setting('email.sendgrid_api_key') ?: env('SENDGRID_API_KEY');
+            config(['services.sendgrid.api_key' => $api_key]);
         }
 
         // Locale

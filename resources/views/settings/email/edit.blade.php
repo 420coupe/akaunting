@@ -12,6 +12,8 @@
                     <x-slot name="body">
                         <x-form.group.select name="protocol" label="{{ trans('settings.email.protocol') }}" :options="$email_protocols" :selected="setting('email.protocol')" not-required change="onChangeProtocol" />
 
+                        <x-form.group.password name="sendgrid_api_key" label="{{ trans('settings.email.sendgrid_api_key') }}" value="{{ setting('email.sendgrid_api_key') }}" ::disabled="email.sendgridApiKey" not-required />
+
                         <x-form.group.text name="sendmail_path" label="{{ trans('settings.email.sendmail_path') }}" value="{{ setting('email.sendmail_path') }}" ::disabled="email.sendmailPath" not-required />
 
                         <x-form.group.text name="smtp_host" label="{{ trans('settings.email.smtp.host') }}" value="{{ setting('email.smtp_host') }}" ::disabled="email.smtpHost" not-required />

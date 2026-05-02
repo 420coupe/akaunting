@@ -141,6 +141,8 @@ return [
         ],
         'sendmail'                      => 'Sendmail',
         'sendmail_path'                 => 'Sendmail Path',
+        'sendgrid'                      => 'SendGrid',
+        'sendgrid_api_key'              => 'SendGrid API Key',
         'log'                           => 'Log Emails',
         'email_service'                 => 'Email Service',
         'email_templates'               => 'Email Templates',
