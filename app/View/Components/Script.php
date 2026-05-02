@@ -66,7 +66,10 @@ class Script extends Component
         }
 
         $jsPath = $path . $file . '.min.js';
-        $absolutePath = public_path($jsPath);
+        // public_path() already resolves to the public/ directory, so strip the
+        // leading 'public/' from $path to avoid /public/public/js/... double-path.
+        $fsSafePath = str_starts_with($jsPath, 'public/') ? substr($jsPath, strlen('public/')) : $jsPath;
+        $absolutePath = public_path($fsSafePath);
         $version = file_exists($absolutePath) ? filemtime($absolutePath) : $version;
 
         $path .= $file . '.min.js?v=' . $version;

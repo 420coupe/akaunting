@@ -1,7 +1,7 @@
 var staticCacheName = "pwa-v" + new Date().getTime();
 var filesToCache = [
-    'public/img/pwa/icon-192x192.png',
-    'public/img/pwa/icon-512x512.png'
+    "public/img/pwa/icon-192x192.png",
+    "public/img/pwa/icon-512x512.png",
 ];
 
 /*
@@ -31,15 +31,8 @@ self.addEventListener('activate', event => {
     );
 });*/
 
-// Serve from Cache
-self.addEventListener("fetch", event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                return response || fetch(event.request);
-            })
-            .catch(() => {
-                return caches.match('offline');
-            })
-    )
+// Always fetch from network — the app uses filemtime query strings (?v=<mtime>)
+// for cache-busting, so serving stale Cache Storage entries would break deploys.
+self.addEventListener("fetch", (event) => {
+    event.respondWith(fetch(event.request));
 });
