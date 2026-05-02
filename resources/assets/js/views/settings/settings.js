@@ -27,11 +27,9 @@ const app = new Vue({
         return {
             form: new Form("setting"),
             bulk_action: new BulkAction("settings"),
-            email: {
-                showSendmailPath: false,
-                showSmtp: false,
-                showSendgridKey: false,
-            },
+            show_sendmail: false,
+            show_smtp: false,
+            show_sendgrid: false,
             tags: null,
             template_title: "",
 
@@ -51,9 +49,9 @@ const app = new Vue({
 
     methods: {
         onChangeProtocol(protocol) {
-            this.email.showSendmailPath = protocol === "sendmail";
-            this.email.showSmtp = protocol === "smtp";
-            this.email.showSendgridKey = protocol === "sendgrid";
+            this.show_sendmail = protocol === "sendmail";
+            this.show_smtp = protocol === "smtp";
+            this.show_sendgrid = protocol === "sendgrid";
         },
 
         onTemplate() {

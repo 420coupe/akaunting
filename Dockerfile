@@ -113,8 +113,10 @@ CMD ["php-fpm"]
 # =============================================================================
 FROM nginx:stable-alpine AS nginx-runtime
 
-# Copy compiled public assets (js/css + vendor) from node-builder
-COPY --from=node-builder /app/public /var/www/html/public
+# Copy compiled public assets from the runtime stage (not node-builder directly).
+# This guarantees nginx always serves the exact same JS/CSS as the app container
+# and eliminates the parallel build race where nginx could grab a stale cache.
+COPY --from=runtime /var/www/html/public /var/www/html/public
 
 # Belt-and-suspenders: copy public/vendor/ directly from the build context.
 # This ensures .dockerignore can never accidentally strip public/vendor/ — if it
