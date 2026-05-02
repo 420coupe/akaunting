@@ -65,6 +65,10 @@ class Script extends Component
             $path .= $folder . '/';
         }
 
+        $jsPath = $path . $file . '.min.js';
+        $absolutePath = public_path($jsPath);
+        $version = file_exists($absolutePath) ? filemtime($absolutePath) : $version;
+
         $path .= $file . '.min.js?v=' . $version;
 
         return $path;
